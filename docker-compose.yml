@@ -1,0 +1,67 @@
+services:
+  registry:
+    image: maven:3.9-eclipse-temurin-11
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    command: mvn -q -pl registry exec:java
+    environment:
+      REGISTRY_HOST: 0.0.0.0
+      REGISTRY_PORT: 9000
+      REGISTRY_TTL_MS: 10000
+      REGISTRY_CLEANUP_INTERVAL_MS: 5000
+    ports:
+      - "9000:9000"
+
+  backend-1:
+    image: maven:3.9-eclipse-temurin-11
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    command: mvn -q -pl backend-service exec:java
+    depends_on:
+      - registry
+    environment:
+      SERVICE_NAME: backend-service
+      HOST: backend-1
+      PORT: 9101
+      INSTANCE_ID: backend-1
+      REGISTRY_URL: http://registry:9000
+    ports:
+      - "9101:9101"
+
+  backend-2:
+    image: maven:3.9-eclipse-temurin-11
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    command: mvn -q -pl backend-service exec:java
+    depends_on:
+      - registry
+    environment:
+      SERVICE_NAME: backend-service
+      HOST: backend-2
+      PORT: 9102
+      INSTANCE_ID: backend-2
+      REGISTRY_URL: http://registry:9000
+    ports:
+      - "9102:9102"
+
+  client:
+    image: maven:3.9-eclipse-temurin-11
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    command: mvn -q -pl client-service exec:java
+    depends_on:
+      - registry
+      - backend-1
+      - backend-2
+    environment:
+      HOST: 0.0.0.0
+      PORT: 9200
+      REGISTRY_URL: http://registry:9000
+      BACKEND_SERVICE_NAME: backend-service
+    ports:
+      - "9200:9200"
+

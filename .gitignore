@@ -1,0 +1,23 @@
+# Maven
+/target/
+**/target/
+
+# IDEs
+.idea/
+*.iml
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Build artifacts
+*.class
+*.jar
+*.war
+*.ear
+
+# Misc
+*.pid
+
