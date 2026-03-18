@@ -5,6 +5,54 @@
 - `backend-service` registers on startup, renews via heartbeats, and exposes `/api/data`.
 - `client-service` queries the registry for healthy `backend-service` instances, picks one at random, and calls it via `/call-backend`.
 
+## Architecture Diagram
+                          +-----------------------------+
+                          |        Service Registry     |
+                          |-----------------------------|
+                          | In-memory service list      |
+                          | - backend-service:          |
+                          |   [inst1, inst2]            |
+                          |                             |
+                          | Removes instances if        |
+                          | heartbeats stop             |
+                          +-------------+---------------+
+                                        ^
+                  Register + Heartbeat   |   Query instances
+                                        |
+        +-------------------------------+------------------------------+
+        |                                                              |
+        |                                                              |
++-----------------------------+                          +-----------------------------+
+|  Backend Service Instance 1 |                          |  Backend Service Instance 2 |
+|-----------------------------|                          |-----------------------------|
+| Port: 8081                  |                          | Port: 8082                  |
+| Registers on startup        |                          | Registers on startup        |
+| Sends heartbeat             |                          | Sends heartbeat             |
+|                             |                          |                             |
+| GET /api/data               |                          | GET /api/data               |
+| → returns instance details  |                          | → returns instance details  |
++-------------+---------------+                          +-------------+---------------+
+              ^                                                          ^
+              |                                                          |
+              +------------------- Called by client ----------------------+
+                                      (random selection)
+                                                   
+                                  +-----------------------------+
+                                  |       Client Service        |
+                                  |-----------------------------|
+                                  | GET /call-backend           |
+                                  |                             |
+                                  | 1. Query registry           |
+                                  | 2. Get healthy instances    |
+                                  | 3. Pick random instance     |
+                                  | 4. Call /api/data           |
+                                  | 5. Return response          |
+                                  +-------------+---------------+
+                                                ^
+                                                |
+                                                | HTTP request
+                                                |
+                                          External User
 ## Folder Structure
 ```
 registry/
